@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BundleController;
 use App\Http\Controllers\Api\V1\MemberController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -8,25 +9,36 @@ use App\Http\Controllers\Api\V1\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
-    // Workspace Bootstrap & Demo Reset
-    Route::get('/bundle', [BundleController::class, 'index']);
-    Route::post('/demo/reset', [BundleController::class, 'reset']);
+    // Public Auth
+    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/login', [AuthController::class, 'login']);
 
-    // Workspaces
-    Route::patch('/workspaces/{workspace}', [WorkspaceController::class, 'update']);
+    // Protected Routes (Sanctum)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    // Projects
-    Route::get('/projects', [ProjectController::class, 'index']);
-    Route::post('/projects', [ProjectController::class, 'store']);
+        // Multi-Tenant Bundle
+        Route::get('/bundle', [BundleController::class, 'index']);
 
-    // Tasks, Subtasks & Comments
-    Route::get('/tasks', [TaskController::class, 'index']);
-    Route::post('/tasks', [TaskController::class, 'store']);
-    Route::patch('/tasks/{task}', [TaskController::class, 'update']);
-    Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
-    Route::post('/tasks/{task}/comments', [TaskController::class, 'addComment']);
+        // Companies / Workspaces
+        Route::post('/workspaces', [WorkspaceController::class, 'store']);
+        Route::patch('/workspaces/{workspace}', [WorkspaceController::class, 'update']);
 
-    // Team Members & RBAC Roles
-    Route::post('/members', [MemberController::class, 'store']);
-    Route::patch('/members/{member}/role', [MemberController::class, 'updateRole']);
+        // Company Members
+        Route::post('/workspaces/{workspace}/members', [MemberController::class, 'store']);
+        Route::patch('/workspaces/{workspace}/members/{member}/role', [MemberController::class, 'updateRole']);
+        Route::delete('/workspaces/{workspace}/members/{member}', [MemberController::class, 'destroy']);
+
+        // Projects
+        Route::post('/projects', [ProjectController::class, 'store']);
+        Route::patch('/projects/{project}', [ProjectController::class, 'update']);
+        Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+
+        // Tasks & Comments
+        Route::post('/tasks', [TaskController::class, 'store']);
+        Route::patch('/tasks/{task}', [TaskController::class, 'update']);
+        Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
+        Route::post('/tasks/{task}/comments', [TaskController::class, 'addComment']);
+    });
 });

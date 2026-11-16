@@ -10,6 +10,7 @@ return new class extends Migration {
         Schema::create('team_members', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('workspace_id', 36);
+            $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->string('name', 120);
             $table->string('email', 160);
             $table->enum('role', ['owner', 'admin', 'member', 'viewer'])->default('member');
